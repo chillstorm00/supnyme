@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Créer un compte — SUP'NYME</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+<script src="theme.js"></script>
+</head>
+<body class="auth-page">
+  <div class="auth-screen">
+    <div class="auth-card">
+      <p class="auth-card__brand">SUP'<span>NYME</span></p>
+      <h1>Créer un compte</h1>
+
+      <form id="form-register" class="auth-card__form">
+        <label for="pseudo">Pseudo</label>
+        <input type="text" id="pseudo" placeholder="3-20 caractères, lettres/chiffres/_" autocomplete="username" required />
+
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" placeholder="6 caractères minimum" autocomplete="new-password" required />
+
+        <label for="email">Email (optionnel)</label>
+        <input type="email" id="email" placeholder="exemple@email.com" autocomplete="email" />
+
+        <button type="submit" class="btn-block">S'inscrire</button>
+      </form>
+
+      <p class="auth-card__error" id="error"></p>
+      <p class="auth-card__switch">Déjà un compte ? <a href="login.html">Se connecter</a></p>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+</body>
+</html>

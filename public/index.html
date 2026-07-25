@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SUP'NYME</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+<script src="theme.js"></script>
+</head>
+<body class="wall-page">
+  <div class="wall">
+    <header class="wall__header">
+      <span class="wall__brand">SUP'<span>NYME</span></span>
+      <button class="wall__profile-btn" id="open-settings" aria-label="Paramètres">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+
+    <div class="wall__search">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input type="text" id="search" placeholder="Rechercher un message..." />
+    </div>
+
+    <section class="trending" id="trending" hidden>
+      <p class="trending__title">🔥 Tendances</p>
+      <div class="trending__list" id="trending-list"></div>
+    </section>
+
+    <main class="wall__feed" id="feed">
+      <div class="skeleton" id="loading">
+        <div class="skeleton__bubble"></div>
+        <div class="skeleton__bubble"></div>
+        <div class="skeleton__bubble"></div>
+      </div>
+    </main>
+
+    <div class="reply-preview" id="reply-preview" hidden>
+      <div class="reply-preview__body">
+        <span class="reply-preview__label">Réponse à</span>
+        <p id="reply-preview-text"></p>
+      </div>
+      <button id="reply-cancel" aria-label="Annuler la réponse">✕</button>
+    </div>
+
+    <form class="composer-bar" id="composer-form">
+      <input type="text" id="content" maxlength="280" placeholder="Écris ton message..." autocomplete="off" />
+      <button type="submit" id="send" aria-label="Envoyer">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h16m0 0l-6-6m6 6l-6 6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </form>
+    <p class="composer-error" id="composer-error"></p>
+  </div>
+
+  <div class="sheet" id="reaction-sheet" hidden>
+    <div class="sheet__backdrop" id="reaction-backdrop"></div>
+    <div class="sheet__panel sheet__panel--emoji" id="emoji-grid"></div>
+  </div>
+
+  <div class="sheet" id="settings-sheet" hidden>
+    <div class="sheet__backdrop" id="settings-backdrop"></div>
+    <div class="sheet__panel">
+      <h2>Paramètres</h2>
+
+      <div class="settings-block">
+        <label for="settings-pseudo">Pseudo</label>
+        <div class="settings-row">
+          <input type="text" id="settings-pseudo" />
+          <button id="save-pseudo" class="btn-small">Enregistrer</button>
+        </div>
+        <p class="settings-error" id="pseudo-error"></p>
+      </div>
+
+      <div class="settings-block">
+        <label>Email</label>
+        <p class="settings-static" id="settings-email">—</p>
+      </div>
+
+      <div class="settings-block">
+        <label>Palette de couleurs</label>
+        <div class="palette-row">
+          <button class="swatch" data-palette="bleu" style="background:#2E7BD8" aria-label="Bleu"></button>
+          <button class="swatch" data-palette="violet" style="background:#6E5CD8" aria-label="Violet"></button>
+          <button class="swatch" data-palette="vert" style="background:#1D9E75" aria-label="Vert"></button>
+          <button class="swatch" data-palette="rose" style="background:#D4537E" aria-label="Rose"></button>
+        </div>
+      </div>
+
+      <div class="settings-block settings-row">
+        <label for="dark-toggle">Mode sombre</label>
+        <input type="checkbox" id="dark-toggle" />
+      </div>
+
+      <button id="logout-btn" class="btn-block btn-block--ghost">Déconnexion</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
