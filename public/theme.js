@@ -53,4 +53,12 @@ function setDarkMode(enabled) {
   applyTheme();
 }
 
-applyTheme();
+function applyThemeSafe() {
+  if (document.body) {
+    applyTheme();
+  } else {
+    document.addEventListener("DOMContentLoaded", applyTheme);
+  }
+}
+
+applyThemeSafe();
