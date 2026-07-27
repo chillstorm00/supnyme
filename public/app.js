@@ -18,9 +18,17 @@ const EMOJIS = ["👍","❤️","😂","😮","😢","🙏","🔥","😡","🎉"
 
 // --- Session ---
 
+function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() =>
+    clearTimeout(id)
+  );
+}
+
 (async function checkSession() {
   try {
-    const res = await fetch("/api/auth/me");
+    const res = await fetchWithTimeout("/api/auth/me");
     const data = await res.json();
     if (!data.pseudo) {
       window.location.href = "login.html";
@@ -30,7 +38,15 @@ const EMOJIS = ["👍","❤️","😂","😮","😢","🙏","🔥","😡","🎉"
     document.getElementById("settings-email").textContent = data.email || "Aucun email renseigné";
     init();
   } catch (e) {
-    window.location.href = "login.html";
+    if (loading) {
+      loading.outerHTML = `
+        <div class="feed-empty">
+          <p>Le serveur met du temps à répondre (ça arrive après une période d'inactivité).</p>
+          <button id="retry-btn" class="btn-small" style="margin-top:0.6rem;">Réessayer</button>
+        </div>`;
+      const retryBtn = document.getElementById("retry-btn");
+      if (retryBtn) retryBtn.addEventListener("click", () => window.location.reload());
+    }
   }
 })();
 
@@ -79,7 +95,7 @@ function renderReactions(msg) {
 
 function renderMessage(msg) {
   const wrap = document.createElement("div");
-  wrap.className = "bubble-row";
+  wrap.className = msg.isMine ? "bubble-row bubble-row--mine" : "bubble-row bubble-row--theirs";
   wrap.dataset.id = msg.id;
 
   const contentHtml = msg.deleted
@@ -91,7 +107,7 @@ function renderMessage(msg) {
     : "";
 
   wrap.innerHTML = `
-    <div class="bubble">
+    <div class="bubble ${msg.isMine ? "bubble--mine" : ""}">
       ${replyHtml}
       ${contentHtml}
       ${renderReactions(msg)}
@@ -170,12 +186,14 @@ let currentSearch = "";
 async function loadMessages() {
   try {
     const url = currentSearch ? `/api/messages?q=${encodeURIComponent(currentSearch)}` : "/api/messages";
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url);
     const messages = await res.json();
     if (loading) loading.remove();
     renderFeed(messages);
   } catch (e) {
-    feed.innerHTML = `<p class="feed-empty">connexion impossible au serveur.</p>`;
+    feed.innerHTML = `<p class="feed-empty">Connexion au serveur impossible ou trop lente. <button id="retry-feed" class="btn-small">Réessayer</button></p>`;
+    const retryFeed = document.getElementById("retry-feed");
+    if (retryFeed) retryFeed.addEventListener("click", loadMessages);
   }
 }
 
