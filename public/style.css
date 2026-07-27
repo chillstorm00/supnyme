@@ -246,6 +246,8 @@ body {
 }
 
 .bubble-row { display: flex; }
+.bubble-row--mine { justify-content: flex-end; }
+.bubble-row--theirs { justify-content: flex-start; }
 
 .bubble {
   background: var(--c-surface);
@@ -254,6 +256,10 @@ body {
   max-width: 82%;
   box-shadow: 0 1px 1px rgba(0,0,0,0.06);
   animation: bubble-in 0.22s ease;
+}
+
+.bubble--mine {
+  background: var(--c-bubble-alt);
 }
 
 @keyframes bubble-in {
