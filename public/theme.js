@@ -15,6 +15,22 @@ const PALETTES = {
     light: { page: "#FBEAF0", surface: "#FFFFFF", header: "#F6D6E3", accent: "#D4537E", accentText: "#FFFFFF", bubbleAlt: "#FDF0F5" },
     dark: { page: "#340F1F", surface: "#4A162E", header: "#3D1226", accent: "#E888AA", accentText: "#340F1F", bubbleAlt: "#571B37" },
   },
+  ambre: {
+    light: { page: "#FBEFDD", surface: "#FFFFFF", header: "#F5E1C0", accent: "#D98A2B", accentText: "#FFFFFF", bubbleAlt: "#FDF5E8" },
+    dark: { page: "#2E2010", surface: "#402C16", header: "#362510", accent: "#F0A94A", accentText: "#2E2010", bubbleAlt: "#4C3618" },
+  },
+  turquoise: {
+    light: { page: "#DDF4F2", surface: "#FFFFFF", header: "#C7E9E6", accent: "#159C9C", accentText: "#FFFFFF", bubbleAlt: "#EAFAF9" },
+    dark: { page: "#0C2626", surface: "#123838", header: "#0E2F2F", accent: "#3FC7C4", accentText: "#0C2626", bubbleAlt: "#164848" },
+  },
+  graphite: {
+    light: { page: "#E9EAEC", surface: "#FFFFFF", header: "#DBDDE1", accent: "#4B5563", accentText: "#FFFFFF", bubbleAlt: "#F2F3F5" },
+    dark: { page: "#191B1F", surface: "#25282D", header: "#1F2226", accent: "#9BA3AF", accentText: "#191B1F", bubbleAlt: "#2E3238" },
+  },
+  corail: {
+    light: { page: "#FCEAE4", surface: "#FFFFFF", header: "#F8D6CA", accent: "#E36F49", accentText: "#FFFFFF", bubbleAlt: "#FEF1EC" },
+    dark: { page: "#341C12", surface: "#48281A", header: "#3B2115", accent: "#F0906A", accentText: "#341C12", bubbleAlt: "#57301E" },
+  },
 };
 
 function getSavedPalette() {
