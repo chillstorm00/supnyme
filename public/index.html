@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SUP'NYME</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css" />
 <script src="theme.js"></script>
 </head>
@@ -30,6 +30,7 @@
     <div class="wall__search">
       <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <input type="text" id="search" placeholder="Rechercher un message..." />
+      <button id="search-clear" class="search-clear" aria-label="Effacer la recherche" hidden>✕</button>
     </div>
 
     <section class="trending" id="trending" hidden>
@@ -114,6 +115,10 @@
           <button class="swatch" data-palette="violet" style="background:#6E5CD8" aria-label="Violet"></button>
           <button class="swatch" data-palette="vert" style="background:#1D9E75" aria-label="Vert"></button>
           <button class="swatch" data-palette="rose" style="background:#D4537E" aria-label="Rose"></button>
+          <button class="swatch" data-palette="ambre" style="background:#D98A2B" aria-label="Ambre"></button>
+          <button class="swatch" data-palette="turquoise" style="background:#159C9C" aria-label="Turquoise"></button>
+          <button class="swatch" data-palette="graphite" style="background:#4B5563" aria-label="Graphite"></button>
+          <button class="swatch" data-palette="corail" style="background:#E36F49" aria-label="Corail"></button>
         </div>
       </div>
 
