@@ -9,7 +9,7 @@
   --c-text-muted: #8A9BAE;
   --c-border: rgba(0,0,0,0.07);
   --c-danger: #D4534F;
-  --font-display: "Sora", sans-serif;
+  --font-display: "Playfair Display", serif;
   --font-body: "Inter", sans-serif;
 }
 
@@ -96,7 +96,7 @@ body {
   border: none;
   border-radius: 10px;
   padding: 0.75rem;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
@@ -238,6 +238,16 @@ body {
   color: var(--c-text);
   width: 100%;
 }
+.search-clear {
+  background: none;
+  border: none;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0 0.1rem;
+  flex-shrink: 0;
+}
+.search-clear:hover { color: var(--c-danger); }
 
 .trending {
   margin: 0 1rem 0.6rem;
@@ -258,14 +268,21 @@ body {
 }
 .trending-item {
   font-size: 0.82rem;
+  font-family: var(--font-body);
   color: var(--c-text);
   background: var(--c-bubble-alt);
+  border: none;
   border-radius: 8px;
   padding: 0.45rem 0.6rem;
   display: flex;
+  width: 100%;
   justify-content: space-between;
   gap: 0.5rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
 }
+.trending-item:hover { background: var(--c-surface); box-shadow: 0 0 0 1.5px var(--c-accent); }
 .trending-item span:last-child {
   color: var(--c-text-muted);
   white-space: nowrap;
@@ -571,7 +588,7 @@ body {
   margin: 0.4rem 0 0;
 }
 
-.palette-row { display: flex; gap: 0.6rem; }
+.palette-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .swatch {
   width: 34px;
   height: 34px;
