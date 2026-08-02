@@ -53,7 +53,9 @@ function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
 function init() {
   loadMessages();
   loadTrending();
+  refreshNotifBadge();
   setInterval(loadMessages, 8000);
+  setInterval(refreshNotifBadge, 15000);
 }
 
 // --- Utils ---
@@ -115,6 +117,8 @@ function renderMessage(msg) {
         <div class="bubble__actions">
           ${!msg.deleted ? `<button class="action-react" title="Réagir"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>` : ""}
           ${!msg.deleted ? `<button class="action-reply" title="Répondre"><svg viewBox="0 0 24 24" fill="none"><path d="M9 10l-5 5 5 5M4 15h11a4 4 0 004-4V5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : ""}
+          ${!msg.deleted ? `<button class="action-bookmark ${msg.isBookmarked ? "is-active" : ""}" title="Favori"><svg viewBox="0 0 24 24" fill="${msg.isBookmarked ? "currentColor" : "none"}"><path d="M6 4a2 2 0 012-2h8a2 2 0 012 2v17l-6-4-6 4V4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>` : ""}
+          ${!msg.deleted ? `<button class="action-share" title="Partager"><svg viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="2.5" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="2.5" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2.5" stroke="currentColor" stroke-width="2"/><path d="M8.2 10.7l7.6-4.4M8.2 13.3l7.6 4.4" stroke="currentColor" stroke-width="2"/></svg></button>` : ""}
           ${msg.isMine && !msg.deleted ? `<button class="action-delete" title="Supprimer"><svg viewBox="0 0 24 24" fill="none"><path d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 0l1 12a1 1 0 001 1h6a1 1 0 001-1l1-12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : ""}
         </div>
         <span class="bubble__time">${formatTime(msg.created_at)}</span>
@@ -140,6 +144,12 @@ function renderMessage(msg) {
   const deleteBtn = wrap.querySelector(".action-delete");
   if (deleteBtn) deleteBtn.addEventListener("click", () => deleteMessage(msg.id));
 
+  const bookmarkBtn = wrap.querySelector(".action-bookmark");
+  if (bookmarkBtn) bookmarkBtn.addEventListener("click", () => toggleBookmark(msg.id, bookmarkBtn));
+
+  const shareBtn = wrap.querySelector(".action-share");
+  if (shareBtn) shareBtn.addEventListener("click", () => shareMessage(msg.id, shareBtn));
+
   wrap.querySelectorAll(".reaction-chip").forEach((chip) => {
     chip.addEventListener("click", () => sendReaction(msg.id, chip.dataset.emoji));
   });
@@ -147,7 +157,12 @@ function renderMessage(msg) {
   return wrap;
 }
 
+let isFirstRender = true;
+
 function renderFeed(messages) {
+  const wasNearBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 120;
+  const shouldScroll = isFirstRender || wasNearBottom;
+
   feed.innerHTML = "";
   if (messages.length === 0) {
     feed.innerHTML = `
@@ -157,6 +172,7 @@ function renderFeed(messages) {
         </svg>
         <p>Aucun message pour l'instant — sois le premier à écrire !</p>
       </div>`;
+    isFirstRender = false;
     return;
   }
 
@@ -176,12 +192,17 @@ function renderFeed(messages) {
     feed.appendChild(renderMessage(msg));
   });
 
-  feed.scrollTop = feed.scrollHeight;
+  if (shouldScroll) {
+    feed.scrollTop = feed.scrollHeight;
+  }
+  isFirstRender = false;
 }
 
 // --- Chargement ---
 
 let currentSearch = "";
+
+let hasHighlighted = false;
 
 async function loadMessages() {
   try {
@@ -190,6 +211,10 @@ async function loadMessages() {
     const messages = await res.json();
     if (loading) loading.remove();
     renderFeed(messages);
+    if (!hasHighlighted) {
+      hasHighlighted = true;
+      highlightSharedMessage();
+    }
   } catch (e) {
     feed.innerHTML = `<p class="feed-empty">Connexion au serveur impossible ou trop lente. <button id="retry-feed" class="btn-small">Réessayer</button></p>`;
     const retryFeed = document.getElementById("retry-feed");
@@ -261,6 +286,7 @@ composerForm.addEventListener("submit", async (e) => {
     contentInput.value = "";
     replyingTo = null;
     replyPreview.hidden = true;
+    isFirstRender = true; // force le retour en bas : c'est notre propre message qu'on vient d'envoyer
     loadMessages();
     loadTrending();
   } catch (e) {
@@ -294,6 +320,53 @@ async function sendReaction(id, emoji) {
     /* silencieux */
   }
   closeReactionSheet();
+}
+
+async function toggleBookmark(id, btn) {
+  try {
+    const res = await fetch(`/api/messages/${id}/bookmark`, { method: "POST" });
+    const data = await res.json();
+    btn.classList.toggle("is-active", data.bookmarked);
+    btn.querySelector("svg").setAttribute("fill", data.bookmarked ? "currentColor" : "none");
+  } catch (e) {
+    /* silencieux */
+  }
+}
+
+function showToast(text) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = text;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add("is-visible"), 10);
+  setTimeout(() => {
+    toast.classList.remove("is-visible");
+    setTimeout(() => toast.remove(), 250);
+  }, 2000);
+}
+
+async function shareMessage(id) {
+  const url = `${window.location.origin}/index.html?m=${id}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast("Lien copié !");
+  } catch (e) {
+    showToast(url);
+  }
+}
+
+function highlightSharedMessage() {
+  const params = new URLSearchParams(window.location.search);
+  const targetId = params.get("m");
+  if (!targetId) return;
+  const el = feed.querySelector(`[data-id="${targetId}"]`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  const bubble = el.querySelector(".bubble");
+  if (bubble) {
+    bubble.classList.add("bubble--highlight");
+    setTimeout(() => bubble.classList.remove("bubble--highlight"), 2000);
+  }
 }
 
 // --- Recherche ---
@@ -337,6 +410,7 @@ document.getElementById("open-settings").addEventListener("click", () => {
   settingsSheet.hidden = false;
   syncPaletteButtons();
   document.getElementById("dark-toggle").checked = getSavedDarkMode();
+  loadStats();
 });
 settingsBackdrop.addEventListener("click", () => (settingsSheet.hidden = true));
 
@@ -388,3 +462,107 @@ document.getElementById("logout-btn").addEventListener("click", async () => {
   }
   window.location.href = "login.html";
 });
+
+// --- Statistiques ---
+
+async function loadStats() {
+  try {
+    const res = await fetch("/api/auth/me");
+    const data = await res.json();
+    document.getElementById("stat-messages").textContent = data.messageCount ?? 0;
+    document.getElementById("stat-reactions").textContent = data.reactionsReceived ?? 0;
+  } catch (e) {
+    /* silencieux */
+  }
+}
+
+// --- Notifications ---
+
+const notifBadge = document.getElementById("notif-badge");
+const notificationsSheet = document.getElementById("notifications-sheet");
+const notificationsBackdrop = document.getElementById("notifications-backdrop");
+const notificationsList = document.getElementById("notifications-list");
+
+function notifText(n) {
+  if (n.type === "reply") return "a répondu à ton message";
+  if (n.type === "reaction") return "a réagi à ton message";
+  return "nouvelle activité";
+}
+
+async function refreshNotifBadge() {
+  try {
+    const res = await fetch("/api/notifications");
+    const data = await res.json();
+    if (data.unreadCount > 0) {
+      notifBadge.textContent = data.unreadCount > 9 ? "9+" : data.unreadCount;
+      notifBadge.hidden = false;
+    } else {
+      notifBadge.hidden = true;
+    }
+  } catch (e) {
+    /* silencieux */
+  }
+}
+
+document.getElementById("open-notifications").addEventListener("click", async () => {
+  notificationsSheet.hidden = false;
+  try {
+    const res = await fetch("/api/notifications");
+    const data = await res.json();
+    if (data.notifications.length === 0) {
+      notificationsList.innerHTML = `<p class="feed-empty">Aucune notification pour l'instant.</p>`;
+    } else {
+      notificationsList.innerHTML = data.notifications
+        .map(
+          (n) => `
+        <button class="notif-item ${n.read ? "" : "is-unread"}" data-message-id="${n.messageId}">
+          <span class="notif-item__text">Quelqu'un ${notifText(n)}</span>
+          <span class="notif-item__preview">${escapeHtml(truncate(n.preview || "message supprimé", 60))}</span>
+        </button>`
+        )
+        .join("");
+      notificationsList.querySelectorAll(".notif-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          notificationsSheet.hidden = true;
+          const el = feed.querySelector(`[data-id="${item.dataset.messageId}"]`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            const bubble = el.querySelector(".bubble");
+            if (bubble) {
+              bubble.classList.add("bubble--highlight");
+              setTimeout(() => bubble.classList.remove("bubble--highlight"), 2000);
+            }
+          }
+        });
+      });
+    }
+    await fetch("/api/notifications/read-all", { method: "POST" });
+    refreshNotifBadge();
+  } catch (e) {
+    notificationsList.innerHTML = `<p class="feed-empty">Connexion impossible.</p>`;
+  }
+});
+notificationsBackdrop.addEventListener("click", () => (notificationsSheet.hidden = true));
+
+// --- Favoris ---
+
+const bookmarksSheet = document.getElementById("bookmarks-sheet");
+const bookmarksBackdrop = document.getElementById("bookmarks-backdrop");
+const bookmarksList = document.getElementById("bookmarks-list");
+
+document.getElementById("open-bookmarks").addEventListener("click", async () => {
+  bookmarksSheet.hidden = false;
+  try {
+    const res = await fetch("/api/bookmarks");
+    const messages = await res.json();
+    if (messages.length === 0) {
+      bookmarksList.innerHTML = `<p class="feed-empty">Aucun favori pour l'instant.</p>`;
+      return;
+    }
+    bookmarksList.innerHTML = "";
+    messages.forEach((m) => bookmarksList.appendChild(renderMessage(m)));
+  } catch (e) {
+    bookmarksList.innerHTML = `<p class="feed-empty">Connexion impossible.</p>`;
+  }
+});
+bookmarksBackdrop.addEventListener("click", () => (bookmarksSheet.hidden = true));
