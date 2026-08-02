@@ -13,9 +13,18 @@
   <div class="wall">
     <header class="wall__header">
       <span class="wall__brand">SUP'<span>NYME</span></span>
-      <button class="wall__profile-btn" id="open-settings" aria-label="Paramètres">
-        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
+      <div class="wall__header-actions">
+        <button class="wall__icon-btn" id="open-bookmarks" aria-label="Favoris">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 4a2 2 0 012-2h8a2 2 0 012 2v17l-6-4-6 4V4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="wall__icon-btn" id="open-notifications" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 8a6 6 0 1112 0c0 4.5 1.5 6 2 7H4c.5-1 2-2.5 2-7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9.5 19a2.5 2.5 0 005 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span class="badge" id="notif-badge" hidden>0</span>
+        </button>
+        <button class="wall__profile-btn" id="open-settings" aria-label="Paramètres">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
     </header>
 
     <div class="wall__search">
@@ -58,10 +67,31 @@
     <div class="sheet__panel sheet__panel--emoji" id="emoji-grid"></div>
   </div>
 
+  <div class="sheet" id="notifications-sheet" hidden>
+    <div class="sheet__backdrop" id="notifications-backdrop"></div>
+    <div class="sheet__panel">
+      <h2>Notifications</h2>
+      <div id="notifications-list"></div>
+    </div>
+  </div>
+
+  <div class="sheet" id="bookmarks-sheet" hidden>
+    <div class="sheet__backdrop" id="bookmarks-backdrop"></div>
+    <div class="sheet__panel">
+      <h2>Mes favoris</h2>
+      <div id="bookmarks-list"></div>
+    </div>
+  </div>
+
   <div class="sheet" id="settings-sheet" hidden>
     <div class="sheet__backdrop" id="settings-backdrop"></div>
     <div class="sheet__panel">
       <h2>Paramètres</h2>
+
+      <div class="stats-row">
+        <div class="stats-item"><strong id="stat-messages">0</strong><span>messages postés</span></div>
+        <div class="stats-item"><strong id="stat-reactions">0</strong><span>réactions reçues</span></div>
+      </div>
 
       <div class="settings-block">
         <label for="settings-pseudo">Pseudo</label>
