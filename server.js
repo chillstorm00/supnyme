@@ -48,6 +48,27 @@ db.exec(`
     FOREIGN KEY (message_id) REFERENCES messages(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
+
+  CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    message_id INTEGER NOT NULL,
+    read INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (message_id) REFERENCES messages(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS bookmarks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    message_id INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(user_id, message_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (message_id) REFERENCES messages(id)
+  );
 `);
 
 app.set("trust proxy", 1);
@@ -144,7 +165,20 @@ app.get("/api/auth/me", (req, res) => {
   const user = db
     .prepare("SELECT pseudo, email, created_at FROM users WHERE id = ?")
     .get(req.session.userId);
-  res.json(user || { pseudo: null });
+  if (!user) return res.json({ pseudo: null });
+
+  const messageCount = db
+    .prepare("SELECT COUNT(*) as c FROM messages WHERE user_id = ? AND deleted = 0")
+    .get(req.session.userId).c;
+  const reactionsReceived = db
+    .prepare(
+      `SELECT COUNT(*) as c FROM reactions
+       JOIN messages ON messages.id = reactions.message_id
+       WHERE messages.user_id = ? AND messages.deleted = 0`
+    )
+    .get(req.session.userId).c;
+
+  res.json({ ...user, messageCount, reactionsReceived });
 });
 
 app.patch("/api/auth/pseudo", requireAuth, (req, res) => {
@@ -202,6 +236,16 @@ function attachExtras(rows, viewerId) {
     : [];
   const myReactionByMsg = Object.fromEntries(myReactionRows.map((r) => [r.message_id, r.emoji]));
 
+  const bookmarkRows = viewerId
+    ? db
+        .prepare(
+          `SELECT message_id FROM bookmarks
+           WHERE user_id = ? AND message_id IN (${placeholders})`
+        )
+        .all(viewerId, ...ids)
+    : [];
+  const bookmarkedSet = new Set(bookmarkRows.map((r) => r.message_id));
+
   const reactionsByMsg = {};
   for (const r of reactionRows) {
     if (!reactionsByMsg[r.message_id]) reactionsByMsg[r.message_id] = [];
@@ -214,6 +258,7 @@ function attachExtras(rows, viewerId) {
     deleted: !!r.deleted,
     created_at: r.created_at,
     isMine: viewerId ? r.user_id === viewerId : false,
+    isBookmarked: bookmarkedSet.has(r.id),
     replyTo: r.reply_to_id
       ? {
           id: r.reply_to_id,
@@ -297,7 +342,7 @@ app.post("/api/messages", requireAuth, (req, res) => {
   }
 
   if (replyToId) {
-    const target = db.prepare("SELECT id FROM messages WHERE id = ?").get(replyToId);
+    const target = db.prepare("SELECT id, user_id FROM messages WHERE id = ?").get(replyToId);
     if (!target) {
       return res.status(400).json({ error: "Message d'origine introuvable." });
     }
@@ -308,6 +353,15 @@ app.post("/api/messages", requireAuth, (req, res) => {
       "INSERT INTO messages (user_id, content, reply_to_id, ip_hash) VALUES (?, ?, ?, ?)"
     )
     .run(req.session.userId, content, replyToId, ipHash);
+
+  if (replyToId) {
+    const target = db.prepare("SELECT user_id FROM messages WHERE id = ?").get(replyToId);
+    if (target && target.user_id !== req.session.userId) {
+      db.prepare(
+        "INSERT INTO notifications (user_id, type, message_id) VALUES (?, 'reply', ?)"
+      ).run(target.user_id, info.lastInsertRowid);
+    }
+  }
 
   const created = db
     .prepare(
@@ -337,7 +391,7 @@ app.post("/api/messages/:id/react", requireAuth, (req, res) => {
   const emoji = (req.body.emoji || "").trim();
   if (!emoji) return res.status(400).json({ error: "Emoji manquant." });
 
-  const msg = db.prepare("SELECT id FROM messages WHERE id = ?").get(id);
+  const msg = db.prepare("SELECT id, user_id FROM messages WHERE id = ?").get(id);
   if (!msg) return res.status(404).json({ error: "Message introuvable." });
 
   const existing = db
@@ -352,6 +406,11 @@ app.post("/api/messages/:id/react", requireAuth, (req, res) => {
     db.prepare(
       "INSERT INTO reactions (message_id, user_id, emoji) VALUES (?, ?, ?)"
     ).run(id, req.session.userId, emoji);
+    if (msg.user_id !== req.session.userId) {
+      db.prepare(
+        "INSERT INTO notifications (user_id, type, message_id) VALUES (?, 'reaction', ?)"
+      ).run(msg.user_id, id);
+    }
   }
 
   const rows = db
@@ -361,6 +420,81 @@ app.post("/api/messages/:id/react", requireAuth, (req, res) => {
     )
     .all(id);
   res.json(attachExtras(rows, req.session.userId)[0]);
+});
+
+// --- Notifications ---
+
+app.get("/api/notifications", requireAuth, (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT notifications.id, notifications.type, notifications.read,
+              notifications.created_at, messages.id as message_id,
+              messages.content, messages.deleted
+       FROM notifications
+       JOIN messages ON messages.id = notifications.message_id
+       WHERE notifications.user_id = ?
+       ORDER BY notifications.id DESC
+       LIMIT 30`
+    )
+    .all(req.session.userId);
+
+  const unreadCount = db
+    .prepare("SELECT COUNT(*) as c FROM notifications WHERE user_id = ? AND read = 0")
+    .get(req.session.userId).c;
+
+  res.json({
+    unreadCount,
+    notifications: rows.map((r) => ({
+      id: r.id,
+      type: r.type,
+      read: !!r.read,
+      created_at: r.created_at,
+      messageId: r.message_id,
+      preview: r.deleted ? null : r.content,
+    })),
+  });
+});
+
+app.post("/api/notifications/read-all", requireAuth, (req, res) => {
+  db.prepare("UPDATE notifications SET read = 1 WHERE user_id = ?").run(req.session.userId);
+  res.json({ ok: true });
+});
+
+// --- Favoris ---
+
+app.post("/api/messages/:id/bookmark", requireAuth, (req, res) => {
+  const id = Number(req.params.id);
+  const msg = db.prepare("SELECT id FROM messages WHERE id = ?").get(id);
+  if (!msg) return res.status(404).json({ error: "Message introuvable." });
+
+  const existing = db
+    .prepare("SELECT id FROM bookmarks WHERE user_id = ? AND message_id = ?")
+    .get(req.session.userId, id);
+
+  if (existing) {
+    db.prepare("DELETE FROM bookmarks WHERE id = ?").run(existing.id);
+    res.json({ bookmarked: false });
+  } else {
+    db.prepare("INSERT INTO bookmarks (user_id, message_id) VALUES (?, ?)").run(
+      req.session.userId,
+      id
+    );
+    res.json({ bookmarked: true });
+  }
+});
+
+app.get("/api/bookmarks", requireAuth, (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT messages.id, messages.user_id, messages.content, messages.reply_to_id,
+              messages.created_at, messages.deleted
+       FROM bookmarks
+       JOIN messages ON messages.id = bookmarks.message_id
+       WHERE bookmarks.user_id = ? AND messages.hidden = 0
+       ORDER BY bookmarks.id DESC`
+    )
+    .all(req.session.userId);
+  res.json(attachExtras(rows, req.session.userId));
 });
 
 app.listen(PORT, () => {
