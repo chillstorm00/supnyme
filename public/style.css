@@ -60,6 +60,7 @@ body {
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
   margin: 0 0 1.5rem;
 }
 
@@ -155,8 +156,50 @@ body {
   font-weight: 800;
   font-size: 1.1rem;
   color: var(--c-text);
+  letter-spacing: -0.01em;
 }
 .wall__brand span { color: var(--c-accent); }
+
+.wall__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wall__icon-btn {
+  position: relative;
+  background: var(--c-surface);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.wall__icon-btn:hover { color: var(--c-accent); }
+.wall__icon-btn svg { width: 18px; height: 18px; }
+
+.badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  background: var(--c-danger);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  border: 2px solid var(--c-page);
+}
 
 .wall__profile-btn {
   background: var(--c-surface);
@@ -181,7 +224,10 @@ body {
   padding: 0.55rem 0.8rem;
   border-radius: 10px;
   color: var(--c-text-muted);
+  border: 1.5px solid transparent;
+  transition: border-color 0.15s;
 }
+.wall__search:focus-within { border-color: var(--c-accent); }
 .wall__search svg { width: 17px; height: 17px; flex-shrink: 0; }
 .wall__search input {
   border: none;
@@ -389,18 +435,21 @@ body {
   gap: 0.5rem;
   background: var(--c-header);
   padding: 0.6rem 1rem;
+  border-top: 1px solid var(--c-border);
 }
 .composer-bar input {
   flex: 1;
   background: var(--c-surface);
-  border: none;
+  border: 1.5px solid transparent;
   border-radius: 22px;
   padding: 0.7rem 1rem;
   font-family: var(--font-body);
   font-size: 0.9rem;
   color: var(--c-text);
   outline: none;
+  transition: border-color 0.15s;
 }
+.composer-bar input:focus { border-color: var(--c-accent); }
 .composer-bar button {
   width: 42px;
   height: 42px;
@@ -461,6 +510,8 @@ body {
   font-family: var(--font-display);
   margin: 0 0 1rem;
   font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .sheet__panel--emoji {
@@ -533,3 +584,99 @@ body {
 input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--c-accent); }
 
 body.is-dark .sheet__panel { color: var(--c-text); }
+
+/* --- Notifications --- */
+
+.notif-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--c-page);
+  border: none;
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+.notif-item.is-unread {
+  background: var(--c-bubble-alt);
+  border-left: 3px solid var(--c-accent);
+}
+.notif-item__text {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--c-text);
+}
+.notif-item__preview {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--c-text-muted);
+  margin-top: 0.15rem;
+}
+
+/* --- Favori actif --- */
+
+.bubble__actions .action-bookmark.is-active {
+  color: var(--c-accent);
+}
+
+/* --- Message mis en avant (lien partagé / notification) --- */
+
+.bubble--highlight {
+  animation: bubble-flash 1.6s ease;
+}
+@keyframes bubble-flash {
+  0%, 100% { box-shadow: 0 1px 1px rgba(0,0,0,0.06); }
+  20% { box-shadow: 0 0 0 3px var(--c-accent); }
+}
+
+/* --- Toast --- */
+
+.toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--c-text);
+  color: var(--c-surface);
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 50;
+  pointer-events: none;
+}
+.toast.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* --- Statistiques (paramètres) --- */
+
+.stats-row {
+  display: flex;
+  gap: 0.7rem;
+  margin-bottom: 1.4rem;
+}
+.stats-item {
+  flex: 1;
+  background: var(--c-page);
+  border-radius: 12px;
+  padding: 0.8rem;
+  text-align: center;
+}
+.stats-item strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--c-accent);
+}
+.stats-item span {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--c-text-muted);
+  margin-top: 0.15rem;
+}
